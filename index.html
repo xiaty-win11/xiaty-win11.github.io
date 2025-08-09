@@ -5,60 +5,555 @@
   <title>Welcome to xiaty-win11.github.io</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
-      background-color: #f8fafc;
       color: #222;
+      min-height: 100vh;
+      position: relative;
+      background: #10131a;
       margin: 0;
       padding: 0;
     }
-    header {
-      background-color: #0078d4;
+    #bg-nebula {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 60% 40%, #2f1464 0%, #2b1a4a 60%, #10131a 100%);
+      opacity: 0.7;
+    }
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -2;
+      pointer-events: none;
+      background: #10131a;
+    }
+
+    /* Loading Page */
+    #loading-page {
+      position: fixed;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      background: #10131a;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      transition: opacity 0.5s;
+    }
+    #loading-spinner {
+      border: 8px solid #222;
+      border-top: 8px solid #20f3ff;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 1.3em;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+    #loading-text {
       color: #fff;
-      padding: 1.5rem 1rem;
+      font-size: 1.3em;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 12px #20f3ff88, 0 0px 2px #fff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin-bottom: 1em;
+    }
+    #loading-page.hide {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s;
+    }
+
+    header {
+      background: rgba(7,17,40,0.93);
+      color: #fff;
+      padding: 2rem 1rem 1rem 1rem;
       text-align: center;
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
+      box-shadow: 0 2px 18px #0008;
+      position: relative;
+      animation: fadeIn 1.3s;
     }
-    main {
-      padding: 2rem 1rem;
-      max-width: 700px;
-      margin: 2rem auto;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    .main-content {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 2.5em;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2em 0 0 0;
+      flex-wrap: wrap;
     }
-    h1 {
+    .repos-side {
+      flex: 2 1 350px;
+      min-width: 320px;
+      max-width: 800px;
+      margin-bottom: 2em;
+      animation: fadeIn 2s;
+    }
+    .repos-list {
+      background: rgba(255,255,255,0.09);
+      border-radius: 14px;
+      box-shadow: 0 0 14px #0002;
+      font-size: 1.07em;
+      display: inline-block;
+      width: 100%;
+    }
+    .repos-list h3 {
+      margin: 0.7em 0 0.2em 1em;
+      font-size: 1.17em;
+      color: #f8fdff;
+      letter-spacing: 0.03em;
+      text-shadow: 0 1px 6px #0004;
+    }
+    .repos-list ul {
+      list-style: none;
+      padding: 0 1em 1em 1em;
       margin: 0;
     }
-    p {
-      line-height: 1.6;
+    .repos-list li {
+      margin: 0.2em 0;
+      padding: 0.5em 0;
+      border-bottom: 1px solid #232939;
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
+      opacity: 0;
+      animation: fadeInLi 0.8s forwards;
+    }
+    .repos-list li:nth-child(n) { animation-delay: calc(0.12s * var(--n)); }
+    .repos-list li:last-child {
+      border-bottom: none;
+    }
+    .repos-list a {
+      color: #82c4fd;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1.07em;
+      border-bottom: 1px dotted #82c4fd;
+      transition: color 0.2s;
+    }
+    .repos-list a:hover {
+      color: #ffb54f;
+      border-bottom: 1px solid #ffb54f;
+    }
+    .repo-desc {
+      font-size: 0.97em;
+      color: #b6c9df;
+      margin-left: 0.7em;
+      flex: 1;
+      font-style: italic;
+      opacity: 0.7;
+    }
+    .repo-stats {
+      font-size: 0.96em;
+      color: #ffe48a;
+      margin-left: 0.2em;
+      display: flex;
+      gap: 0.6em;
+      align-items: center;
+    }
+    .repo-stats span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2em;
+    }
+    .repo-updated {
+      font-size: 0.98em;
+      color: #b2c9fd;
+      margin-left: 0.6em;
+    }
+
+    .clock-side {
+      flex: 1 1 280px;
+      min-width: 260px;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 2em;
+    }
+    .cool-clock {
+      width: 160px;
+      height: 160px;
+      margin-bottom: 0.7em;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cool-clock svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .cool-clock .neon {
+      filter: drop-shadow(0 0 12px #20f3ff) drop-shadow(0 0 32px #c6fffa);
+    }
+    .cool-clock .hand-seconds {
+      stroke: #20f3ff;
+      filter: drop-shadow(0 0 6px #20f3ff);
+    }
+    .cool-clock .hand-minutes {
+      stroke: #ffe48a;
+      filter: drop-shadow(0 0 8px #ffe48a);
+    }
+    .cool-clock .hand-hours {
+      stroke: #ff7d60;
+      filter: drop-shadow(0 0 6px #ff7d60);
+    }
+    .cool-clock .center-dot {
+      fill: #fff;
+      stroke: #20f3ff;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 6px #20f3ff);
+    }
+    .digital {
+      font-size: 1.13em;
+      color: #ffe48a;
+      font-family: 'Roboto Mono', monospace;
+      letter-spacing: 0.04em;
+      background: rgba(0,0,0,0.15);
+      padding: 0.4em 0.9em;
+      border-radius: 7px;
+      display: inline-block;
+      box-shadow: 0 1px 6px #0002;
+      margin-bottom: 0.4em;
+    }
+    .date-info {
+      font-size: 1em;
+      color: #b6c9df;
+      opacity: 0.9;
+      margin-bottom: 0.2em;
+    }
+    .quote-roller-container {
+      margin-top: 1.3em;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+      background: rgba(0,0,0,0.14);
+      border-radius: 8px;
+      box-shadow: 0 1px 10px #0002;
+      animation: fadeIn 2.5s;
+      border: 1.5px solid #20f3ff;
+      transition: height 0.4s cubic-bezier(.62,.11,.47,.98);
+      min-height: 2.3em;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .quote-roller {
+      width: 100%;
+      left: 0;
+      top: 0;
+      color: #b6fdff;
+      font-size: 1.07em;
+      font-style: italic;
+      text-shadow: 0 1px 6px #0002;
+      padding: 0.6em 1em;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.39s cubic-bezier(.62,.11,.47,.98), transform 0.39s cubic-bezier(.62,.11,.47,.98);
+      position: relative;
+      white-space: normal !important;
+      word-break: break-word;
+    }
+    .quote-roller.hide {
+      opacity: 0;
+      transform: translateY(-30%);
+      pointer-events: none;
+    }
+    .quote-roller.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
     footer {
       text-align: center;
-      padding: 1rem;
-      font-size: 0.9em;
-      color: #555;
+      padding: 1.2rem;
+      font-size: 0.93em;
+      color: #fff;
+      margin-top: 2.5em;
+      animation: fadeIn 2.6s;
+    }
+    @media (max-width: 900px) {
+      .main-content { flex-direction: column; align-items: stretch; gap: 0; }
+      .repos-side, .clock-side { max-width: 98vw; width: 100%; }
+      .quote-roller-container { max-width: 98vw;}
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px);}
+      to   { opacity: 1; transform: translateY(0);}
+    }
+    @keyframes fadeInLi {
+      from { opacity: 0; transform: translateY(20px);}
+      to   { opacity: 1; transform: translateY(0);}
     }
   </style>
 </head>
 <body>
+  <div id="bg-nebula"></div>
+  <canvas id="bg-canvas"></canvas>
+  <!-- Loading Page -->
+  <div id="loading-page">
+    <div id="loading-spinner"></div>
+    <div id="loading-text">Loading, please wait...</div>
+  </div>
   <header>
     <h1>Welcome to xiaty-win11.github.io</h1>
+    <div class="main-content">
+      <div class="repos-side">
+        <div class="quote-roller-container" id="quote-roller-container">
+          <div class="quote-roller show" id="quote-roller"></div>
+        </div>
+        <div class="repos-list" id="repos-list">
+          <h3>My Public Responsibilities</h3>
+          <ul><li>Loading...</li></ul>
+        </div>
+      </div>
+      <div class="clock-side">
+        <div class="cool-clock">
+          <svg viewBox="0 0 160 160">
+            <!-- Neon glowing clock face -->
+            <circle class="neon" cx="80" cy="80" r="70" fill="none" stroke="#20f3ff" stroke-width="4"/>
+            <circle cx="80" cy="80" r="65" fill="url(#clockGradient)" stroke="none"/>
+            <defs>
+              <radialGradient id="clockGradient" cx="60%" cy="40%" r="70%">
+                <stop offset="0%" stop-color="#d6e6ff"/>
+                <stop offset="75%" stop-color="#a2b8e7"/>
+                <stop offset="100%" stop-color="#555c8a"/>
+              </radialGradient>
+            </defs>
+            <g id="marks">
+              <!-- will be added by JS -->
+            </g>
+            <line id="hand-hours" class="hand hand-hours" x1="80" y1="80" x2="80" y2="45" stroke-width="6" stroke-linecap="round"/>
+            <line id="hand-minutes" class="hand hand-minutes" x1="80" y1="80" x2="80" y2="30" stroke-width="4" stroke-linecap="round"/>
+            <line id="hand-seconds" class="hand hand-seconds" x1="80" y1="80" x2="80" y2="20" stroke-width="2" stroke-linecap="round"/>
+            <circle class="center-dot" cx="80" cy="80" r="8"/>
+          </svg>
+        </div>
+        <div class="digital" id="digital-clock"></div>
+        <div class="date-info" id="date-info"></div>
+      </div>
+    </div>
   </header>
-  <main>
-    <h2>Hello, World!</h2>
-    <p>
-      This is your new GitHub Pages website. You can edit <b>index.html</b> to customize your homepage.<br>
-      <br>
-      🚀 <b>Get started:</b>
-      <ul>
-        <li>Edit this content to say whatever you want!</li>
-        <li>Add more HTML files for additional pages.</li>
-        <li>Style your site with CSS or add scripts.</li>
-      </ul>
-    </p>
-  </main>
   <footer>
-    &copy; 2025 <a href="https://github.com/xiaty-win11" target="_blank" rel="noopener">xiaty-win11</a>. Powered by GitHub Pages.
+    &copy; 2025 <a href="https://github.com/xiaty-win11" target="_blank" rel="noopener" style="color:#fff;">xiaty-win11</a>. Powered by GitHub Pages.
   </footer>
+  <script>
+    // Loading page logic: hide when repos and quote are shown
+    let loadedQuote = false;
+    let loadedRepos = false;
+    function tryHideLoading() {
+      if (loadedQuote && loadedRepos) {
+        document.getElementById('loading-page').classList.add('hide');
+      }
+    }
+
+    // Starfield background
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let w = window.innerWidth, h = window.innerHeight;
+    function resizeCanvas() {
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = w;
+      canvas.height = h;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    const STAR_COUNT = 170;
+    let stars = [];
+    function randomStar() {
+      return {
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.8 + 0.7,
+        dx: (Math.random()-0.5)*0.10,
+        dy: (Math.random()-0.5)*0.10,
+        hue: Math.random()*360,
+        tw: Math.random()*Math.PI*2
+      };
+    }
+    function initStars() {
+      stars = [];
+      for (let i=0; i<STAR_COUNT; i++) stars.push(randomStar());
+    }
+    initStars();
+    let mx=w/2, my=h/2;
+    window.addEventListener('mousemove', e=>{
+      mx = e.clientX;
+      my = e.clientY;
+    });
+    function drawStarfield() {
+      ctx.clearRect(0,0,w,h);
+      for (let i=0; i<stars.length; i++) {
+        let star = stars[i];
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.r + Math.sin(star.tw)*0.6, 0, 2*Math.PI);
+        ctx.fillStyle = `hsla(${star.hue},70%,${88+Math.sin(star.tw)*7}%,0.87)`;
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = 10 + Math.abs(Math.sin(star.tw)*8);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        star.x += star.dx + (mx-w/2)/w*0.5;
+        star.y += star.dy + (my-h/2)/h*0.5;
+        star.hue += Math.random()*1.7-0.8;
+        star.tw += 0.04 + Math.random()*0.02;
+        if (star.x < 0 || star.x > w || star.y < 0 || star.y > h) {
+          stars[i] = randomStar();
+        }
+      }
+      requestAnimationFrame(drawStarfield);
+    }
+    drawStarfield();
+
+    // Neon analog clock face
+    function drawMarks() {
+      const marks = [];
+      for (let i=0; i<12; i++) {
+        const angle = (i/12)*2*Math.PI - Math.PI/2;
+        const x1 = 80 + Math.cos(angle)*62;
+        const y1 = 80 + Math.sin(angle)*62;
+        const x2 = 80 + Math.cos(angle)*70;
+        const y2 = 80 + Math.sin(angle)*70;
+        marks.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#20f3ff" stroke-width="3" stroke-linecap="round"/>`);
+      }
+      document.querySelector('.cool-clock #marks').innerHTML = marks.join('');
+    }
+    drawMarks();
+    function updateClock() {
+      const now = new Date();
+      const hour = now.getHours()%12;
+      const minute = now.getMinutes();
+      const second = now.getSeconds();
+      const ms = now.getMilliseconds();
+      const hourAngle = ((hour + minute/60) * 30 - 90);
+      const minAngle = ((minute + second/60) * 6 - 90);
+      const secAngle = ((second + ms/1000) * 6 - 90);
+      function handPos(len, angle) {
+        const rad = angle * Math.PI/180;
+        return [80 + Math.cos(rad)*len, 80 + Math.sin(rad)*len];
+      }
+      let [hx, hy] = handPos(35, hourAngle);
+      document.getElementById('hand-hours').setAttribute('x2', hx);
+      document.getElementById('hand-hours').setAttribute('y2', hy);
+      let [mx2, my2] = handPos(52, minAngle);
+      document.getElementById('hand-minutes').setAttribute('x2', mx2);
+      document.getElementById('hand-minutes').setAttribute('y2', my2);
+      let [sx, sy] = handPos(60, secAngle);
+      document.getElementById('hand-seconds').setAttribute('x2', sx);
+      document.getElementById('hand-seconds').setAttribute('y2', sy);
+      document.getElementById('digital-clock').textContent = now.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+      document.getElementById('date-info').textContent = now.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Rolling quotations, container adapts height to content, smooth fade/slide
+    const quotes = [
+      "“The best way to predict the future is to invent it.” – Alan Kay",
+      "“Do not wait to strike till the iron is hot; but make it hot by striking.” – William Butler Yeats",
+      "“Great things are done by a series of small things brought together.” – Vincent Van Gogh",
+      "“Creativity is intelligence having fun.” – Albert Einstein",
+      "“Simplicity is the ultimate sophistication.” – Leonardo da Vinci",
+      "“Code is like humor. When you have to explain it, it’s bad.” – Cory House",
+      "“Stay hungry, stay foolish.” – Steve Jobs",
+      "“First, solve the problem. Then, write the code.” – John Johnson",
+      "“The only way to learn a new programming language is by writing programs in it.” – Dennis Ritchie",
+      "“Talk is cheap. Show me the code.” – Linus Torvalds"
+    ];
+    let quoteIndex = 0;
+    const quoteEl = document.getElementById('quote-roller');
+    const quoteContainer = document.getElementById('quote-roller-container');
+    function showQuoteRolling(i) {
+      quoteEl.classList.remove('show');
+      quoteEl.classList.add('hide');
+      setTimeout(() => {
+        quoteEl.textContent = quotes[i];
+        quoteEl.classList.remove('hide');
+        quoteEl.classList.add('show');
+        setTimeout(() => {
+          quoteContainer.style.height = quoteEl.offsetHeight + "px";
+          loadedQuote = true;
+          tryHideLoading();
+        }, 50);
+      }, 390);
+    }
+    // Initial quote and sizing
+    quoteEl.textContent = quotes[quoteIndex];
+    setTimeout(() => {
+      quoteContainer.style.height = quoteEl.offsetHeight + "px";
+      loadedQuote = true;
+      tryHideLoading();
+    }, 20);
+
+    setInterval(function() {
+      quoteIndex = (quoteIndex+1)%quotes.length;
+      showQuoteRolling(quoteIndex);
+    }, 4000);
+
+    // Fetch public repos and auto-update
+    async function updateRepos() {
+      const listEl = document.getElementById('repos-list');
+      try {
+        const resp = await fetch('https://api.github.com/users/xiaty-win11/repos?sort=updated&per_page=100');
+        if (!resp.ok) throw new Error("Can't fetch repos");
+        const repos = await resp.json();
+        if (!Array.isArray(repos) || repos.length === 0) {
+          listEl.innerHTML = '<h3>My Public Responsibilities</h3><ul><li>No public repositories found.</li></ul>';
+          loadedRepos = true;
+          tryHideLoading();
+          return;
+        }
+        repos.sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
+        let html = '<h3>My Public Responsibilities</h3><ul>';
+        repos.forEach((repo,i) => {
+          html += `<li style="--n:${i+1}">
+            <a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a>
+            <span class="repo-desc">${repo.description ? repo.description.replace(/</g,'&lt;') : 'No description'}</span>
+            <span class="repo-stats">
+              <span title="Stars">⭐ ${repo.stargazers_count}</span>
+              <span title="Forks">🍴 ${repo.forks_count}</span>
+            </span>
+            <span class="repo-updated" title="Last updated">
+              ${new Date(repo.updated_at).toLocaleDateString()} ${new Date(repo.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </span>
+          </li>`;
+        });
+        html += '</ul>';
+        listEl.innerHTML = html;
+        loadedRepos = true;
+        tryHideLoading();
+      } catch (e) {
+        listEl.innerHTML = '<h3>My Public Responsibilities</h3><ul><li>Error loading repositories.</li></ul>';
+        loadedRepos = true;
+        tryHideLoading();
+      }
+    }
+    updateRepos();
+    setInterval(updateRepos, 90000);
+  </script>
 </body>
 </html>
